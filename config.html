@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Configuração API ZPro</title>
+</head>
+<body>
+  <h2>Configuração da API</h2>
+  <label>URL da API:</label><br />
+  <input type="text" id="url" /><br /><br />
+  <label>Bearer Token:</label><br />
+  <input type="text" id="token" /><br /><br />
+  <button onclick="salvar()">Salvar</button>
+
+  <script>
+    function salvar() {
+      localStorage.setItem("zpro_url", document.getElementById("url").value);
+      localStorage.setItem("zpro_token", document.getElementById("token").value);
+      alert("Configurações salvas com sucesso!");
+    }
+
+    window.onload = function () {
+      document.getElementById("url").value = localStorage.getItem("zpro_url") || "";
+      document.getElementById("token").value = localStorage.getItem("zpro_token") || "";
+    };
+  </script>
+</body>
+</html>
