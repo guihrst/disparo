@@ -1,0 +1,11 @@
+version: '3'
+services:
+  web:
+    image: guihorst/whatsapp-envio-zpro:latest
+    ports:
+      - "8081:80"
+
+  proxy:
+    image: guihorst/whatsapp-envio-zpro-proxy:latest
+    ports:
+      - "3002:3000"
