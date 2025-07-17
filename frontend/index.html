@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Disparo em Lote - ZPro</title>
+  <script>
+    let config = {};
+    let contatos = [];
+
+    window.onload = () => {
+      const savedConfig = localStorage.getItem("zproConfig");
+      if (!savedConfig) {
+        alert("Configure a API em config.html antes de usar.");
+        return;
+      }
+      config = JSON.parse(savedConfig);
+    };
+
+    function importarCSV(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const texto = e.target.result.trim();
+        const separador = texto.includes("\t") ? "\t" : texto.includes(";") ? ";" : ",";
+        const linhas = texto.split("\n").filter(l => l.trim());
+        const cabecalho = linhas.shift().split(separador).map(h => h.trim());
+
+        contatos = linhas.map((linha, idx) => {
+          const campos = linha.split(separador);
+          return Object.fromEntries(cabecalho.map((c, i) => [c, campos[i]?.trim()]));
+        });
+
+        document.getElementById("cabecalhos").innerText = "Cabeçalhos detectados: " + cabecalho.join(" | ");
+        document.getElementById("status").innerText = `Importados ${contatos.length} contatos.`;
+        atualizarTabela(contatos);
+      };
+      reader.readAsText(file);
+    }
+
+    function atualizarTabela(dados) {
+      const tabela = document.getElementById("tabela-status");
+      tabela.innerHTML = "<tr><th>Número</th><th>Status</th></tr>";
+      dados.forEach(c => {
+        tabela.innerHTML += `<tr id="linha-${c.numero}"><td>${c.numero}</td><td>Aguardando</td></tr>`;
+      });
+    }
+
+    async function enviarMensagens() {
+      if (contatos.length === 0) return;
+
+      const numeros = contatos.map(c => c.numero);
+      const texto = contatos[0]["Texto + Legenda"];
+      const imagem = contatos[0]["URL da Imagem"];
+      const intervalo = parseInt(document.getElementById("limite").value) || 1;
+
+      const payload = {
+        numbers: numeros,
+        token: config.token,
+        endpoint: config.url,
+        externalKey: "lote_" + Date.now(),
+        isClosed: false,
+        messageType: imagem ? "image_text" : "text",
+        messageText: texto,
+        imageUrl: imagem || "",
+        intervalSeconds: intervalo
+      };
+
+      try {
+        const res = await fetch("http://localhost:3002/dispatch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        document.getElementById("status").innerText = `Disparo iniciado. ID: ${result.jobId}`;
+        numeros.forEach(n => atualizarLinha(n, "Enviado..."));
+      } catch (e) {
+        alert("Erro ao iniciar envio: " + e.message);
+        contatos.forEach(c => atualizarLinha(c.numero, "Erro"));
+      }
+    }
+
+    function atualizarLinha(numero, status) {
+      const linha = document.getElementById("linha-" + numero);
+      if (linha) linha.children[1].innerText = status;
+    }
+  </script>
+</head>
+<body>
+  <h1>Disparo em Lote via Backend</h1>
+  <input type="file" accept=".csv" onchange="importarCSV(event)">
+  <p id="cabecalhos" style="font-weight: bold; color: blue;">Cabeçalhos detectados: (nenhum)</p>
+  <br>
+  <label>Intervalo entre mensagens (segundos): <input type="number" id="limite" value="1" min="1" max="60"></label>
+  <br><br>
+  <button onclick="enviarMensagens()">Enviar</button>
+  <p id="status">Nenhum contato importado.</p>
+  <table border="1" id="tabela-status"></table>
+</body>
+</html>

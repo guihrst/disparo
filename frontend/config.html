@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuração ZPro</title>
+  <script>
+    function salvarConfig() {
+      const url = document.getElementById("url").value;
+      const token = document.getElementById("token").value;
+      localStorage.setItem("zproConfig", JSON.stringify({ url, token }));
+      alert("Configuração salva!");
+    }
+  </script>
+</head>
+<body>
+  <h1>Configuração da API ZPro</h1>
+  <label>URL da API: <input type="text" id="url" size="50"></label><br><br>
+  <label>Bearer Token: <input type="text" id="token" size="50"></label><br><br>
+  <button onclick="salvarConfig()">Salvar</button>
+</body>
+</html>
